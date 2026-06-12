@@ -60,4 +60,27 @@ public class Piece {
 		return (y + Board.HALF_SQUARE_SIZE) / Board.SQUARE_SIZE;
 	}
 	
+
+	public void updatePosition() {
+		x = getX(col);
+		y = getY(row);
+		preCol = getCol(x);
+		preRow = getRow(y);
+//		moved = true;
+		
+	}
+	
+
+	public void resetPosition() {
+		col = preCol;
+		row = preRow;
+
+		x = getX(col);
+		y = getY(row);
+		
+	}
+	
+	
+	
+	
 }

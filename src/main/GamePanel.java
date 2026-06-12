@@ -1,6 +1,7 @@
 package main;
 
 
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -30,19 +31,25 @@ public class GamePanel extends JPanel implements Runnable {
 	
 	Thread gamThread;
     Board board = new Board();
+    Mouse mouse = new Mouse();
     
     // PIECES
     public static ArrayList<Piece> pieces = new ArrayList<>();
 	public static ArrayList<Piece> simPieces = new ArrayList<>();
-    
-	 public GamePanel() {
+	Piece activeP;
+	
+	// BOOLEANS
+	boolean canMove;
+	boolean validSquare;
+	
+	public GamePanel() {
 		 
 			setPreferredSize(new Dimension(WIDTH, HEIGHT));
 		    setBackground(new Color(50,50,50));
 
-//			addMouseMotionListener(mouse);
-//			addMouseListener(mouse);
-//
+			addMouseMotionListener(mouse);
+			addMouseListener(mouse);
+
 	        setPieces();
 		    copyPieces(pieces, simPieces);
 		   
@@ -113,12 +120,114 @@ public class GamePanel extends JPanel implements Runnable {
 	            
 				p.draw(g2);
 			}
+	        
+	        if( activeP != null) {
+		    	if (canMove) {
+	    	     g2.setColor(Color.WHITE);
+	    			  
+	    	       g2.setComposite(
+		            AlphaComposite.getInstance(
+	    		        AlphaComposite.SRC_OVER, 0.7f ) );
+
+	    		    g2.fillRect(
+	    		            activeP.col * Board.SQUARE_SIZE,
+	    		            activeP.row * Board.SQUARE_SIZE,
+	    		            Board.SQUARE_SIZE,
+	    		            Board.SQUARE_SIZE  );
+
+	    		    g2.setComposite(
+	    		        AlphaComposite.getInstance(
+	    		            AlphaComposite.SRC_OVER, 1f ) );
+
+			    }
+
+	    		    activeP.draw(g2);
+	    	}
 	 }
 	 
-	 private void update() {
-			// TODO Auto-generated method stub
+	private void update() {
+		/*
+		*  The UPDATE method is going to handle all the updating stuff.
+		* update the information such as piece's x and y position or number the pieces that are left in the board.
+		*  */ 
+		
+		// // MOUSE BOTTON PRESSED // //
+			if(mouse.pressed) {
+				if (activeP == null) {
+							
+					// if activeP is null, check if you can pick up a piece
+					for(Piece piece : simPieces) {
+
+					// If the mouse is on an ally piece, pick it up as the active piece
+					 if (piece.color == currentColor && piece.col == mouse.x / Board.SQUARE_SIZE 
+							&& piece.row == mouse.y / Board.SQUARE_SIZE) {
+
+							activeP = piece;
+						    }
+						}
+					}else {
+						// if the player is holding a piece , simulate the move
+						simulate();
+					}
+				}
 			
+		// // MOUSE BOTTON RESLEASED // //
+			if(mouse.pressed == false){
+				if(activeP != null){
+					if(validSquare){
+
+					 	// // MOVE CONFIRMED // //
+					//Update piece list in case a piece has been captured 
+					// and removed during the simulation
+						copyPieces(simPieces, pieces);
+						activeP.updatePosition();
+
+//						changeTurn();
+
+					}else { // The move is not confirmed so reset everything
+					copyPieces(pieces, simPieces);
+					activeP.resetPosition();
+					}
+
+					activeP = null;
+				}	
+			}
 		}
+	 
+	private void simulate() {
+		
+		canMove = true;
+		validSquare = true;
+//		canMove = false;
+//		validSquare = false;
+//
+//		// Reset the pieces list in every loop
+//		// This is basically for restoring the removed piece during the simulation
+//		copyPieces(pieces, simPieces);
+		
+		//If a piece is being held, update its position
+		activeP.x = mouse.x - Board.HALF_SQUARE_SIZE;
+		activeP.y = mouse.y - Board.HALF_SQUARE_SIZE;
+		activeP.col = activeP.getCol(activeP.x);
+		activeP.row = activeP.getRow(activeP.y);
+		
+//		// check if the piece is hovering over a reachable square
+//		if( activeP.canMove( activeP.col, activeP.row )) {
+//
+//			canMove = true;
+//				
+//			// If hitting a piece, remove it from the list
+//			if (activeP.hittingP != null) {
+//
+//				simPieces.remove(activeP.hittingP.getIndex());
+//				}
+//					validSquare = true;
+//		}
+		
+	}
+	
+	
+
 	@Override
 	public void run() {
 	    //Game Loop
