@@ -1,0 +1,15 @@
+# VScode
+.VScode/
+
+# Eclipse
+.metadata/
+.classpath
+.project
+.settings/
+
+# Java
+*.class
+
+# OS
+Thumbs.db
+.DS_Store
