@@ -202,7 +202,7 @@ public class GamePanel extends JPanel implements Runnable {
 						
 						if(castlingP != null) {	castlingP.updatePosition();	}
 						
-						changeTurn();
+						changePlayer();
 
 					}else { // The move is not confirmed so reset everything
 					copyPieces(pieces, simPieces);
@@ -253,13 +253,23 @@ public class GamePanel extends JPanel implements Runnable {
 		
 	}
 	
-	public void changeTurn() {
+	public void changePlayer() {
 
 		if (currentColor == WHITE) {
 			currentColor = BLACK;
-
+			
+			//Reset black's two stepped status
+			for(Piece piece : pieces) {
+				if(piece.color == BLACK) {	piece.twoStepped = false;	}
+			}
+			
 		} else{
 			currentColor = 	WHITE;
+			
+			//Reset the white's two stepped status
+			for(Piece piece : pieces) {
+				if(piece.color == WHITE) {	piece.twoStepped = false;	}
+			}
 		}
 	}
 	
