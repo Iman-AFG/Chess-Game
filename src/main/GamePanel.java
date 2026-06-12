@@ -4,8 +4,10 @@ package main;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.util.ArrayList;
 
 import javax.swing.JPanel;
@@ -21,7 +23,7 @@ import piece.Rook;
 public class GamePanel extends JPanel implements Runnable {
 	
 	public static final int WIDTH = 1100;
-	public static final int HEIGHT = 680;
+	public static final int HEIGHT = 640;
 	final int FPS = 45;
 	
     // PIECE COLOR
@@ -37,6 +39,8 @@ public class GamePanel extends JPanel implements Runnable {
     public static ArrayList<Piece> pieces = new ArrayList<>();
 	public static ArrayList<Piece> simPieces = new ArrayList<>();
 	Piece activeP;
+	
+	public static Piece castlingP;
 	
 	// BOOLEANS
 	boolean canMove;
@@ -67,11 +71,11 @@ public class GamePanel extends JPanel implements Runnable {
 		 pieces.add(new Pawn(WHITE, 7, 6));
 		 pieces.add(new Rook(WHITE, 0, 7));
 		 pieces.add(new Rook(WHITE, 7, 7));
-		 pieces.add(new Horse(WHITE, 1, 7));
-		 pieces.add(new Horse(WHITE, 6, 7));
-		 pieces.add(new Bishop(WHITE, 2, 7));
-		 pieces.add(new Bishop(WHITE, 5, 7));
-		 pieces.add(new Queen(WHITE, 3, 7));
+//		 pieces.add(new Horse(WHITE, 1, 7));
+//		 pieces.add(new Horse(WHITE, 6, 7));
+//		 pieces.add(new Bishop(WHITE, 2, 7));
+//		 pieces.add(new Bishop(WHITE, 5, 7));
+//		 pieces.add(new Queen(WHITE, 3, 7));
 		 pieces.add(new King(WHITE, 4, 7));
 
 		 //pieces.add(new Queen(WHITE, 4, 4));
@@ -143,9 +147,23 @@ public class GamePanel extends JPanel implements Runnable {
 
 	    		    activeP.draw(g2);
 	    	}
+	        
+	      //STATUS MESSAGES
+			g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+				RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
+
+			g2.setFont(new Font("BookAntiqe", Font.PLAIN,40));
+			g2.setColor(Color.BLACK);
+			if (currentColor == WHITE) {
+				g2.drawString("White's Turn", 700, 550);
+				
+			} else{
+				g2.drawString("Black's Turn", 700, 250);
+			}
 	 }
 	 
 	private void update() {
+		
 		/*
 		*  The UPDATE method is going to handle all the updating stuff.
 		* update the information such as piece's x and y position or number the pieces that are left in the board.
@@ -181,8 +199,10 @@ public class GamePanel extends JPanel implements Runnable {
 					// and removed during the simulation
 						copyPieces(simPieces, pieces);
 						activeP.updatePosition();
-
-//						changeTurn();
+						
+						if(castlingP != null) {	castlingP.updatePosition();	}
+						
+						changeTurn();
 
 					}else { // The move is not confirmed so reset everything
 					copyPieces(pieces, simPieces);
@@ -196,14 +216,20 @@ public class GamePanel extends JPanel implements Runnable {
 	 
 	private void simulate() {
 		
-		canMove = true;
-		validSquare = true;
-//		canMove = false;
-//		validSquare = false;
-//
-//		// Reset the pieces list in every loop
-//		// This is basically for restoring the removed piece during the simulation
-//		copyPieces(pieces, simPieces);
+		
+		canMove = false;
+		validSquare = false;
+
+		// Reset the pieces list in every loop
+		// This is basically for restoring the removed piece during the simulation
+		copyPieces(pieces, simPieces);
+		
+		//Reset the castling piece's position
+		if(castlingP != null) {
+			castlingP.col = castlingP.preCol;
+			castlingP.x = castlingP.getX(castlingP.col);
+			castlingP = null;
+		}
 		
 		//If a piece is being held, update its position
 		activeP.x = mouse.x - Board.HALF_SQUARE_SIZE;
@@ -211,23 +237,46 @@ public class GamePanel extends JPanel implements Runnable {
 		activeP.col = activeP.getCol(activeP.x);
 		activeP.row = activeP.getRow(activeP.y);
 		
-//		// check if the piece is hovering over a reachable square
-//		if( activeP.canMove( activeP.col, activeP.row )) {
-//
-//			canMove = true;
-//				
-//			// If hitting a piece, remove it from the list
-//			if (activeP.hittingP != null) {
-//
-//				simPieces.remove(activeP.hittingP.getIndex());
-//				}
-//					validSquare = true;
-//		}
+		// check if the piece is hovering over a reachable square
+		if( activeP.canMove( activeP.col, activeP.row )) {
+
+			canMove = true;
+				
+			// If hitting a piece, remove it from the list
+			if (activeP.hittingP != null) {
+
+				simPieces.remove(activeP.hittingP.getIndex());
+				}
+					checkCastling();
+					validSquare = true;
+		}
 		
 	}
 	
-	
+	public void changeTurn() {
 
+		if (currentColor == WHITE) {
+			currentColor = BLACK;
+
+		} else{
+			currentColor = 	WHITE;
+		}
+	}
+	
+	private void checkCastling() {
+		
+		if(castlingP != null) {
+			
+			if(castlingP.col == 0) {	castlingP.col += 3;
+			
+			}else if(castlingP.col == 7) {	castlingP.col -= 2;
+			
+			 }
+			
+			castlingP.x = castlingP.getX(castlingP.col);
+		}
+	}
+	
 	@Override
 	public void run() {
 	    //Game Loop
