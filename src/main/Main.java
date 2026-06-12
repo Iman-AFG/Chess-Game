@@ -13,5 +13,14 @@ public class Main {
 		Window.setBackground(Color.BLACK);
 		Window.setResizable(false);
 
+		// Add Game Panel to the window
+        GamePanel gp = new GamePanel();
+        Window.add(gp);
+        Window.pack();
+        
+        Window.setLocationRelativeTo(null);
+        Window.setVisible(true);
+        
+        gp.launchGame();
 	}
 }
