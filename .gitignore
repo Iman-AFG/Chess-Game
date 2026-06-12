@@ -7,6 +7,9 @@
 .project
 .settings/
 
+# Compiled Java files
+bin/
+
 # Java
 *.class
 
