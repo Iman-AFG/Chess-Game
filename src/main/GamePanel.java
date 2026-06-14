@@ -56,8 +56,9 @@ public class GamePanel extends JPanel implements Runnable {
 			addMouseMotionListener(mouse);
 			addMouseListener(mouse);
 
-	        setPieces();
+			testIllegel();
 //			testPromotion();
+//			setPieces();
 		    copyPieces(pieces, simPieces);
 		   
 		}
@@ -110,7 +111,14 @@ public class GamePanel extends JPanel implements Runnable {
 		pieces.add(new Pawn(BLACK, 5, 4));
 	    pieces.add(new Queen(WHITE, 4, 4));
 	}
-	
+	public void testIllegel() {
+
+		 pieces.add(new Pawn( WHITE, 7, 6));
+		 pieces.add(new King(WHITE, 3, 7));
+		 pieces.add(new King(BLACK, 0, 3));
+		 pieces.add(new Bishop(BLACK, 1, 4));
+		 pieces.add(new Queen(BLACK, 4, 5));
+	}
 	
     public void copyPieces(ArrayList<Piece> source, ArrayList<Piece> target){
 		 target.clear();
@@ -137,21 +145,41 @@ public class GamePanel extends JPanel implements Runnable {
 	        
 	        if( activeP != null) {
 		    	if (canMove) {
-	    	     g2.setColor(Color.WHITE);
-	    			  
-	    	       g2.setComposite(
-		            AlphaComposite.getInstance(
-	    		        AlphaComposite.SRC_OVER, 0.7f ) );
+		    		if( isIllegal(activeP) ) {
+		    			g2.setColor(Color.GRAY);
+		    			  
+			    	       g2.setComposite(
+				            AlphaComposite.getInstance(
+			    		        AlphaComposite.SRC_OVER, 0.7f ) );
 
-	    		    g2.fillRect(
-	    		            activeP.col * Board.SQUARE_SIZE,
-	    		            activeP.row * Board.SQUARE_SIZE,
-	    		            Board.SQUARE_SIZE,
-	    		            Board.SQUARE_SIZE  );
+			    		    g2.fillRect(
+			    		            activeP.col * Board.SQUARE_SIZE,
+			    		            activeP.row * Board.SQUARE_SIZE,
+			    		            Board.SQUARE_SIZE,
+			    		            Board.SQUARE_SIZE  );
 
-	    		    g2.setComposite(
-	    		        AlphaComposite.getInstance(
-	    		            AlphaComposite.SRC_OVER, 1f ) );
+			    		    g2.setComposite(
+			    		        AlphaComposite.getInstance(
+			    		            AlphaComposite.SRC_OVER, 1f ) );
+			    		    
+		    		} else {
+		    			g2.setColor(Color.WHITE);
+		    			  
+			    	       g2.setComposite(
+				            AlphaComposite.getInstance(
+			    		        AlphaComposite.SRC_OVER, 0.7f ) );
+
+			    		    g2.fillRect(
+			    		            activeP.col * Board.SQUARE_SIZE,
+			    		            activeP.row * Board.SQUARE_SIZE,
+			    		            Board.SQUARE_SIZE,
+			    		            Board.SQUARE_SIZE  );
+
+			    		    g2.setComposite(
+			    		        AlphaComposite.getInstance(
+			    		            AlphaComposite.SRC_OVER, 1f ) );
+		    		}
+	    	     
 
 			    }
 
@@ -203,8 +231,9 @@ public class GamePanel extends JPanel implements Runnable {
 					for(Piece piece : simPieces) {
 
 						// If the mouse is on an ally piece, pick it up as the active piece
-						if (piece.color == currentColor && piece.col == mouse.x / Board.SQUARE_SIZE 
-						&& piece.row == mouse.y / Board.SQUARE_SIZE) {		activeP = piece;	}
+						if (piece.color == currentColor 
+							&& piece.col == mouse.x / Board.SQUARE_SIZE 
+							&& piece.row == mouse.y / Board.SQUARE_SIZE) {		activeP = piece;	}
 					 }
 					
 				}else {
@@ -246,6 +275,7 @@ public class GamePanel extends JPanel implements Runnable {
 		}
 	}
 	 
+	
 	private void simulate() {
 		
 		canMove = false;
@@ -257,6 +287,7 @@ public class GamePanel extends JPanel implements Runnable {
 		
 		//Reset the castling piece's position
 		if(castlingP != null) {
+			
 			castlingP.col = castlingP.preCol;
 			castlingP.x = castlingP.getX(castlingP.col);
 			castlingP = null;
@@ -274,15 +305,15 @@ public class GamePanel extends JPanel implements Runnable {
 			canMove = true;
 				
 			// If hitting a piece, remove it from the list
-			if (activeP.hittingP != null) {
-
-				simPieces.remove(activeP.hittingP.getIndex());
-				}
-					checkCastling();
-					validSquare = true;
+			if (activeP.hittingP != null) {		simPieces.remove(activeP.hittingP.getIndex());		}
+			
+			checkCastling();
+			
+			if(isIllegal(activeP) == false) {	validSquare = true;		}
+					
 		}
-		
 	}
+	
 	
 	public void changePlayer() {
 
@@ -304,6 +335,7 @@ public class GamePanel extends JPanel implements Runnable {
 		}
 	}
 	
+	
 	private void checkCastling() {
 		
 		if(castlingP != null) {
@@ -317,6 +349,8 @@ public class GamePanel extends JPanel implements Runnable {
 			castlingP.x = castlingP.getX(castlingP.col);
 		}
 	}
+	
+	
 	
 	private boolean canPromote() {
 		
@@ -361,6 +395,18 @@ public class GamePanel extends JPanel implements Runnable {
 	}
 	
 
+	private boolean isIllegal(Piece king) {
+		if(king.type == Type.KING) {
+			for(Piece piece : simPieces) {
+				if(piece != king && piece.color != king.color 
+						&& piece.canMove(king.col, king.row) ) {	return true;		}
+			}
+		}
+		return false;
+	}
+	
+	
+	
 	@Override
 	public void run() {
 	    //Game Loop
