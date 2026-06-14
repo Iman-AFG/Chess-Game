@@ -38,6 +38,7 @@ public class GamePanel extends JPanel implements Runnable {
     // PIECES
     public static ArrayList<Piece> pieces = new ArrayList<>();
 	public static ArrayList<Piece> simPieces = new ArrayList<>();
+	ArrayList<Piece> promoPieces = new ArrayList<>();
 	Piece activeP;
 	
 	public static Piece castlingP;
@@ -45,6 +46,7 @@ public class GamePanel extends JPanel implements Runnable {
 	// BOOLEANS
 	boolean canMove;
 	boolean validSquare;
+	boolean promotion;
 	
 	public GamePanel() {
 		 
@@ -55,6 +57,7 @@ public class GamePanel extends JPanel implements Runnable {
 			addMouseListener(mouse);
 
 	        setPieces();
+//			testPromotion();
 		    copyPieces(pieces, simPieces);
 		   
 		}
@@ -71,14 +74,14 @@ public class GamePanel extends JPanel implements Runnable {
 		 pieces.add(new Pawn(WHITE, 7, 6));
 		 pieces.add(new Rook(WHITE, 0, 7));
 		 pieces.add(new Rook(WHITE, 7, 7));
-//		 pieces.add(new Horse(WHITE, 1, 7));
-//		 pieces.add(new Horse(WHITE, 6, 7));
-//		 pieces.add(new Bishop(WHITE, 2, 7));
-//		 pieces.add(new Bishop(WHITE, 5, 7));
-//		 pieces.add(new Queen(WHITE, 3, 7));
+		 pieces.add(new Horse(WHITE, 1, 7));
+		 pieces.add(new Horse(WHITE, 6, 7));
+		 pieces.add(new Bishop(WHITE, 2, 7));
+		 pieces.add(new Bishop(WHITE, 5, 7));
+		 pieces.add(new Queen(WHITE, 3, 7));
 		 pieces.add(new King(WHITE, 4, 7));
 
-		 //pieces.add(new Queen(WHITE, 4, 4));
+		 
 		 
 		
 		 
@@ -102,6 +105,13 @@ public class GamePanel extends JPanel implements Runnable {
 		 
 	}
 
+	public void testPromotion() {
+		pieces.add(new Pawn(WHITE, 0, 3));
+		pieces.add(new Pawn(BLACK, 5, 4));
+	    pieces.add(new Queen(WHITE, 4, 4));
+	}
+	
+	
     public void copyPieces(ArrayList<Piece> source, ArrayList<Piece> target){
 		 target.clear();
 		 
@@ -148,17 +158,27 @@ public class GamePanel extends JPanel implements Runnable {
 	    		    activeP.draw(g2);
 	    	}
 	        
-	      //STATUS MESSAGES
+	        
+	      //	STATUS MESSAGES		//
 			g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
 				RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
 
 			g2.setFont(new Font("BookAntiqe", Font.PLAIN,40));
 			g2.setColor(Color.BLACK);
-			if (currentColor == WHITE) {
-				g2.drawString("White's Turn", 700, 550);
+			
+			if(promotion) {
+				g2.drawString("Promote To :", 840, 150);
 				
-			} else{
-				g2.drawString("Black's Turn", 700, 250);
+				for(Piece piece : promoPieces){
+					g2.drawImage(piece.image, piece.getX(piece.col), piece.getY(piece.row),
+							Board.SQUARE_SIZE, Board.SQUARE_SIZE, null);
+				}
+			}else {
+				
+				if (currentColor == WHITE) {	
+					g2.drawString("White's Turn", 700, 550);
+					
+				} else{		g2.drawString("Black's Turn", 700, 250);	}
 			}
 	 }
 	 
@@ -169,53 +189,64 @@ public class GamePanel extends JPanel implements Runnable {
 		* update the information such as piece's x and y position or number the pieces that are left in the board.
 		*  */ 
 		
+		if(promotion) {
+			
+			promoting();
+			
+		} else {
+			
 		// // MOUSE BOTTON PRESSED // //
 			if(mouse.pressed) {
-				if (activeP == null) {
-							
+				if (activeP == null) {	
+					
 					// if activeP is null, check if you can pick up a piece
 					for(Piece piece : simPieces) {
 
-					// If the mouse is on an ally piece, pick it up as the active piece
-					 if (piece.color == currentColor && piece.col == mouse.x / Board.SQUARE_SIZE 
-							&& piece.row == mouse.y / Board.SQUARE_SIZE) {
-
-							activeP = piece;
-						    }
-						}
-					}else {
-						// if the player is holding a piece , simulate the move
-						simulate();
-					}
-				}
-			
+						// If the mouse is on an ally piece, pick it up as the active piece
+						if (piece.color == currentColor && piece.col == mouse.x / Board.SQUARE_SIZE 
+						&& piece.row == mouse.y / Board.SQUARE_SIZE) {		activeP = piece;	}
+					 }
+					
+				}else {
+					// if the player is holding a piece , simulate the move
+					simulate();
+				 		}
+			}
+						
 		// // MOUSE BOTTON RESLEASED // //
 			if(mouse.pressed == false){
 				if(activeP != null){
 					if(validSquare){
 
-					 	// // MOVE CONFIRMED // //
-					//Update piece list in case a piece has been captured 
-					// and removed during the simulation
+			 	// // MOVE CONFIRMED // //
+						
+				//Update piece list in case a piece has been captured 
+				// and removed during the simulation
 						copyPieces(simPieces, pieces);
 						activeP.updatePosition();
 						
+									
 						if(castlingP != null) {	castlingP.updatePosition();	}
-						
-						changePlayer();
-
-					}else { // The move is not confirmed so reset everything
-					copyPieces(pieces, simPieces);
-					activeP.resetPosition();
+							
+							if(canPromote()){
+								promotion = true;
+										
+							}else {
+								changePlayer();
+								activeP = null;
+									}		
 					}
-
-					activeP = null;
+					else { // The move is not confirmed so reset everything
+						copyPieces(pieces, simPieces);
+						activeP.resetPosition();
+						activeP = null;
+					}
 				}	
 			}
 		}
+	}
 	 
 	private void simulate() {
-		
 		
 		canMove = false;
 		validSquare = false;
@@ -287,6 +318,49 @@ public class GamePanel extends JPanel implements Runnable {
 		}
 	}
 	
+	private boolean canPromote() {
+		
+		if(activeP.type == Type.PAWN) {
+			if(currentColor == WHITE && activeP.row == 0 || currentColor == BLACK && activeP.row == 7) {
+				promoPieces.clear();
+				promoPieces.add(new Rook (currentColor, 9, 2));
+				promoPieces.add(new Horse (currentColor, 9, 3));
+				promoPieces.add(new Bishop (currentColor, 9, 4));
+				promoPieces.add(new Queen (currentColor, 9, 5));
+				
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private void promoting() {
+		
+		if(mouse.pressed) {
+			for(Piece piece : promoPieces) {
+				if(piece.col == mouse.x / Board.SQUARE_SIZE &&
+					piece.row == mouse.y / Board.SQUARE_SIZE) {
+									
+					switch(piece.type) {
+					case ROOK : simPieces.add(new Rook(currentColor,activeP.col, activeP.row)); break;
+					case BISHOP : simPieces.add(new Bishop(currentColor,activeP.col, activeP.row)); break;
+					case HORSE : simPieces.add(new Horse(currentColor,activeP.col, activeP.row)); break;
+					case QUEEN : simPieces.add(new Queen(currentColor,activeP.col, activeP.row)); break;
+					default: break;
+					}
+					
+					simPieces.remove(activeP.getIndex());
+					copyPieces(simPieces, pieces);
+					activeP = null;
+					promotion = false;
+					changePlayer();
+					
+				}
+			}
+		}
+	}
+	
+
 	@Override
 	public void run() {
 	    //Game Loop
