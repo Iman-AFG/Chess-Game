@@ -142,7 +142,7 @@ public class GamePanel extends JPanel implements Runnable {
 	        
 	        if( activeP != null) {
 		    	if (canMove) {
-		    		if( isIllegal(activeP) ) {
+		    		if( isIllegal(activeP) || opponentCanCaptureKing() ) {
 		    			g2.setColor(Color.GRAY);
 		    			  
 			    	       g2.setComposite(
@@ -199,11 +199,25 @@ public class GamePanel extends JPanel implements Runnable {
 							Board.SQUARE_SIZE, Board.SQUARE_SIZE, null);
 				}
 			}else {
-				
 				if (currentColor == WHITE) {	
 					g2.drawString("White's Turn", 700, 550);
 					
-				} else{		g2.drawString("Black's Turn", 700, 250);	}
+					if( checkingP != null && checkingP.color == BLACK) {
+						g2.setColor(Color.red);
+						g2.drawString("The king", 840, 650);
+						g2.drawString("is in check", 840, 700);
+					}
+					
+				} else{		
+					
+					g2.drawString("Black's Turn", 700, 250);
+					
+					if( checkingP != null && checkingP.color == WHITE) {
+						g2.setColor(Color.red);
+						g2.drawString("The king", 840, 100);
+						g2.drawString("is in check", 840, 150);
+					}
+				}
 			}
 	 }
 	 
@@ -254,13 +268,17 @@ public class GamePanel extends JPanel implements Runnable {
 									
 						if(castlingP != null) {	castlingP.updatePosition();	}
 							
+						if (isKingInCheck()) {
+							
+						} else {
 							if(canPromote()){
 								promotion = true;
 										
 							}else {
 								changePlayer();
 								activeP = null;
-									}		
+									}
+						}								
 					}
 					else { // The move is not confirmed so reset everything
 						copyPieces(pieces, simPieces);
@@ -272,7 +290,6 @@ public class GamePanel extends JPanel implements Runnable {
 		}
 	}
 	 
-	
 	private void simulate() {
 		
 		canMove = false;
@@ -306,7 +323,7 @@ public class GamePanel extends JPanel implements Runnable {
 			
 			checkCastling();
 			
-			if(isIllegal(activeP) == false) {	validSquare = true;		}
+			if(isIllegal(activeP) == false && opponentCanCaptureKing() == false ) {	validSquare = true;		}
 					
 		}
 	}
@@ -346,8 +363,6 @@ public class GamePanel extends JPanel implements Runnable {
 			castlingP.x = castlingP.getX(castlingP.col);
 		}
 	}
-	
-	
 	
 	private boolean canPromote() {
 		
@@ -402,6 +417,41 @@ public class GamePanel extends JPanel implements Runnable {
 		return false;
 	}
 	
+	private boolean isKingInCheck() {
+		Piece king = getKing(true);
+		
+		if(activeP.canMove(king.col, king.row)) {
+			checkingP = activeP;
+			return true;
+			
+		} else {	checkingP = null;}
+		
+		return false;
+	}
+	
+	private Piece getKing(boolean opponent) {
+		Piece king = null;
+		
+		for(Piece piece : simPieces) {
+			if (opponent){
+				if(piece.type == Type.KING && piece.color != currentColor) {	king = piece;	}
+				
+			} else {
+				if(piece.type == Type.KING && piece.color == currentColor) {	king = piece;	}
+			}
+		}		
+		return king;
+	}
+	
+	private boolean opponentCanCaptureKing() {
+		Piece king = getKing(false);
+		
+		for(Piece piece : simPieces) {
+			if(piece.color != king.color && piece.canMove(king.col, king.row) ) {	return true;	}
+		}
+		
+		return false;
+	}
 	
 	
 	@Override
