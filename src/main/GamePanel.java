@@ -39,7 +39,7 @@ public class GamePanel extends JPanel implements Runnable {
     public static ArrayList<Piece> pieces = new ArrayList<>();
 	public static ArrayList<Piece> simPieces = new ArrayList<>();
 	ArrayList<Piece> promoPieces = new ArrayList<>();
-	Piece activeP;
+	Piece activeP, checkingP;
 	
 	public static Piece castlingP;
 	
@@ -47,6 +47,7 @@ public class GamePanel extends JPanel implements Runnable {
 	boolean canMove;
 	boolean validSquare;
 	boolean promotion;
+	boolean gameOver;
 	
 	public GamePanel() {
 		 
@@ -81,10 +82,6 @@ public class GamePanel extends JPanel implements Runnable {
 		 pieces.add(new Bishop(WHITE, 5, 7));
 		 pieces.add(new Queen(WHITE, 3, 7));
 		 pieces.add(new King(WHITE, 4, 7));
-
-		 
-		 
-		
 		 
 		 //BLACK TEAM
 		 pieces.add(new Pawn(BLACK, 0, 1));
