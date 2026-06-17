@@ -62,6 +62,7 @@ public class GamePanel extends JPanel implements Runnable {
 
 			addMouseMotionListener(mouse);
 			addMouseListener(mouse);
+		
 
 //			testIllegel();
 //			testPromotion();
@@ -69,7 +70,7 @@ public class GamePanel extends JPanel implements Runnable {
 		    copyPieces(pieces, simPieces);
 		
 		}
-	 
+
 	public void setPieces(){
 		 // WHITE TEAM
 		 pieces.add(new Pawn(WHITE, 0, 6));
@@ -692,7 +693,7 @@ public class GamePanel extends JPanel implements Runnable {
 	            }
 	        }
 	}
-	
+
 	public void launchGame() {
 		
 		gamThread = new Thread(this);
